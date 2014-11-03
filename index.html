@@ -3,23 +3,82 @@
   <head>
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="moment-twitter.js"></script>
+    <link href="bootstrap.css" rel="stylesheet">
   </head>
   <body>
+    <button>Home</button>
+    <ol id="tweetContainer">
+    </ol>
     <script>
 
-      $(document).ready(function(){
-        var $body = $('body');
-        $body.html('');
+      var $body = $('body');
+      var $tweetContainer = $('#tweetContainer');
+      var observing = {};
 
-        var index = streams.home.length - 1;
-        while(index >= 0){
-          var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
-          index -= 1;
+      function clearTweets () {
+        return $tweetContainer.html('');
+      }
+
+      function createTweet (tweet) {
+        var tweetContainer = $('<div></div>', {
+          'class': 'tweet panel'
+        });
+
+        var userLink = $('<a />', {
+          'href': '/@' + tweet.user
+        }).text('@' + tweet.user);
+
+        var timeago = getTimeAgo(tweet.created_at);
+
+        return tweetContainer
+          .append(userLink)
+          .append(': ' + tweet.message)
+          .append('<br> Added ' + timeago + ' ago<hr>'); 
+      }
+
+      function getTimeAgo (time) {
+        return moment(time).twitter();
+      }
+
+      function showTweets (user) {
+        tweets = user ? streams.users[user] : streams.home;
+        clearTweets();
+        observeChanges(tweets);
+        printTweets(tweets);
+      }
+
+      function printTweets (tweets) {
+        for (var i = tweets.length - 1; i >= 0; i--) {
+          $tweet = createTweet(tweets[i]);
+          $tweet.appendTo($tweetContainer);
         }
+      }
 
+      function bindEvents () {
+        $tweetContainer.on('click', 'a[href*="@"]', function (e) {
+          e.preventDefault();
+          var $username = $(this).attr('href');
+          $username = $username.substr(2, $username.length);
+          showTweets($username);
+        });
+      }
+
+      function observer (changes) {
+        clearTweets();
+        printTweets(changes['0'].object);
+      }
+
+      function observeChanges (user) {
+        Object.unobserve(observing, observer);
+        Object.observe(user, observer);
+        observing = user;
+      }
+
+      $(document).ready(function () {
+        showTweets();
+        bindEvents();
       });
 
     </script>
