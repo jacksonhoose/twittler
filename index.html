@@ -42,7 +42,7 @@
         return moment(time).twitter();
       }
 
-      function showTweets (user) {
+      function getTweets (user) {
         tweets = user ? streams.users[user] : streams.home;
         clearTweets();
         observeChanges(tweets);
@@ -61,7 +61,7 @@
           e.preventDefault();
           var $username = $(this).attr('href');
           $username = $username.substr(2, $username.length);
-          showTweets($username);
+          getTweets($username);
         });
       }
 
@@ -77,7 +77,7 @@
       }
 
       $(document).ready(function () {
-        showTweets();
+        getTweets();
         bindEvents();
       });
 
